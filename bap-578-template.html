@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFA - Non-Fungible Agents | Create Your AI Identity</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0a0a0a; --emerald: #10B981; --white: #fff; --white-70: rgba(255,255,255,0.7); --white-50: rgba(255,255,255,0.5); --white-30: rgba(255,255,255,0.3); --white-15: rgba(255,255,255,0.15); --white-10: rgba(255,255,255,0.1); }
+        body { background: var(--bg); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.7; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        header { padding: 20px 0; border-bottom: 1px solid var(--white-10); position: fixed; top: 0; left: 0; right: 0; background: rgba(10,10,10,0.8); backdrop-filter: blur(10px); z-index: 1000; }
+        header .container { display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 40px; height: 40px; background: var(--emerald); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: #000; }
+        .logo span { font-size: 18px; font-weight: 600; }
+        .nav { display: flex; align-items: center; gap: 32px; }
+        .nav a { color: var(--white-50); text-decoration: none; font-size: 14px; transition: color 0.2s; cursor: pointer; }
+        .nav a:hover { color: var(--emerald); }
+        .cta-btn { padding: 10px 24px; background: var(--emerald); color: #000; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
+        .wallet-address { padding: 10px 16px; background: rgba(16,185,129,0.2); color: var(--emerald); border: 1px solid var(--emerald); border-radius: 8px; font-weight: 600; font-size: 14px; display: none; }
+        .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.6; }
+        .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.9) 100%); z-index: 1; }
+        .hero-content { position: relative; z-index: 2; text-align: center; max-width: 900px; padding: 120px 24px 100px; }
+        .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--emerald), #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-desc { font-size: 20px; color: var(--white-70); max-width: 700px; margin: 0 auto 40px; }
+        .hero-btns { display: flex; justify-content: center; gap: 16px; margin-bottom: 80px; }
+        .btn-primary { padding: 16px 36px; background: var(--emerald); color: #000; border: none; border-radius: 10px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .btn-secondary { padding: 16px 36px; background: transparent; color: var(--white); border: 1px solid var(--white-30); border-radius: 10px; font-weight: 500; font-size: 16px; cursor: pointer; }
+        .btn-primary:hover, .cta-btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-secondary:hover { border-color: var(--emerald); }
+        .scroll-indicator { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2; animation: bounce 2s infinite; cursor: pointer; }
+        .scroll-indicator svg { width: 24px; height: 24px; color: var(--white-50); }
+        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(10px); } }
+        .stats { display: flex; justify-content: center; gap: 80px; padding: 60px 0; border-top: 1px solid var(--white-10); border-bottom: 1px solid var(--white-10); background: var(--bg); }
+        .stat-item { text-align: center; }
+        .stat-num { font-size: 40px; font-weight: 700; margin-bottom: 8px; color: var(--emerald); }
+        .stat-label { font-size: 14px; color: var(--white-50); }
+        .section { padding: 100px 0; border-bottom: 1px solid var(--white-10); background: var(--bg); }
+        .section-header { text-align: center; max-width: 700px; margin: 0 auto 60px; }
+        .section-header h2 { font-size: 42px; font-weight: 700; margin-bottom: 16px; }
+        .section-header p { color: var(--white-50); font-size: 18px; }
+        .concept-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-top: 60px; }
+        .concept-item h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+        .concept-item p { color: var(--white-50); font-size: 15px; line-height: 1.8; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .feature-card { padding: 36px; border: 1px solid var(--white-10); border-radius: 16px; transition: all 0.3s; cursor: pointer; }
+        .feature-card:hover { border-color: var(--emerald); transform: translateY(-4px); background: rgba(16,185,129,0.05); }
+        .feature-icon { width: 56px; height: 56px; background: rgba(16,185,129,0.1); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+        .feature-icon svg { width: 28px; height: 28px; }
+        .feature-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+        .feature-card p { color: var(--white-50); font-size: 14px; }
+        .how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+        .how-item { text-align: center; position: relative; }
+        .how-item::after { content: ''; position: absolute; top: 28px; right: -16px; width: 32px; height: 2px; background: linear-gradient(90deg, var(--emerald), transparent); }
+        .how-item:last-child::after { display: none; }
+        .how-num { width: 56px; height: 56px; background: var(--emerald); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; margin: 0 auto 20px; }
+        .how-item h4 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .how-item p { color: var(--white-50); font-size: 14px; }
+        .agent-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+        .agent-type { padding: 40px; border: 1px solid var(--white-10); border-radius: 20px; cursor: pointer; transition: all 0.3s; }
+        .agent-type:hover { border-color: var(--emerald); transform: translateY(-4px); }
+        .agent-type.selected { border-color: var(--emerald); background: rgba(16,185,129,0.1); }
+        .agent-type h4 { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+        .agent-type p { color: var(--white-50); font-size: 14px; margin-bottom: 24px; }
+        .agent-features { text-align: left; list-style: none; }
+        .agent-features li { color: var(--white-50); font-size: 14px; margin-bottom: 10px; padding-left: 20px; position: relative; }
+        .agent-features li::before { content: ''; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; background: var(--emerald); border-radius: 50%; }
+        .tech-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; }
+        .tech-card { padding: 32px; border: 1px solid var(--white-10); border-radius: 16px; }
+        .tech-card h4 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--emerald); }
+        .tech-card ul { list-style: none; }
+        .tech-card li { color: var(--white-50); font-size: 14px; margin-bottom: 12px; padding-left: 16px; position: relative; }
+        .tech-card li::before { content: ''; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; background: var(--emerald); border-radius: 50%; }
+        .launchpad-panel { max-width: 500px; margin: 0 auto; padding: 48px; border: 1px solid var(--white-10); border-radius: 24px; text-align: center; }
+        .launchpad-panel h3 { font-size: 28px; font-weight: 600; margin-bottom: 12px; }
+        .launchpad-panel > p { color: var(--white-50); margin-bottom: 32px; }
+        .progress-bar { display: flex; gap: 8px; margin-bottom: 32px; }
+        .progress-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--white-15); transition: background 0.3s; }
+        .progress-dot.active { background: var(--emerald); }
+        .progress-dot.completed { background: var(--emerald); }
+        .mint-step { display: none; padding: 32px; background: var(--white-10); border-radius: 16px; margin-bottom: 24px; }
+        .mint-step.active { display: block; }
+        .mint-step h4 { font-size: 18px; margin-bottom: 8px; }
+        .mint-step p { color: var(--white-50); font-size: 14px; margin-bottom: 20px; }
+        .mint-btn { width: 100%; padding: 14px; background: var(--emerald); color: #000; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s; }
+        .mint-btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .mint-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .success-check { display: none; width: 80px; height: 80px; background: var(--emerald); border-radius: 50%; margin: 0 auto 24px; align-items: center; justify-content: center; }
+        .success-check.show { display: flex; }
+        .success-check svg { width: 40px; height: 40px; color: #000; }
+        .notification { position: fixed; top: 100px; right: 20px; padding: 16px 24px; background: var(--emerald); color: #000; border-radius: 10px; font-weight: 600; z-index: 2000; transform: translateX(400px); transition: transform 0.3s; }
+        .notification.show { transform: translateX(0); }
+        .notification.error { background: #ef4444; color: #fff; }
+        footer { padding: 60px 0; border-top: 1px solid var(--white-10); text-align: center; background: var(--bg); }
+        footer p { color: var(--white-30); font-size: 14px; }
+        @media (max-width: 768px) { .hero h1 { font-size: 40px; } .features-grid { grid-template-columns: 1fr; } .how-grid { grid-template-columns: repeat(2, 1fr); } .how-item::after { display: none; } .agent-types { grid-template-columns: 1fr; } .tech-grid { grid-template-columns: 1fr; } .concept-grid { grid-template-columns: 1fr; } .nav { display: none; } .stats { flex-wrap: wrap; gap: 32px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="logo.png" alt="NFA" style="width:40px;height:40px;border-radius:8px;">
+                <span>NFA</span>
+            </div>
+            <nav class="nav">
+                <a href="#about">About</a>
+                <a href="#features">Features</a>
+                <a href="#how">How It Works</a>
+                <a href="#agents">Agent Types</a>
+                <a href="#technical">Technical</a>
+            </nav>
+            <button class="cta-btn" id="launchBtn" onclick="scrollToLaunch()">Not connected</button>
+            <span class="wallet-address" id="walletAddr" style="display:none" onclick="disconnectWallet()" title="Click to disconnect"></span>
+        </div>
+    </header>
+    <section class="hero">
+        <video class="hero-video" autoplay loop muted playsinline id="heroVideo">
+            <source src="hero-video.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>Non-Fungible Agents<br><span>Own your AI identity</span></h1>
+            <p class="hero-desc">Create verifiable AI agents with traceable origins, auditable memory, and accountable behavior.</p>
+            <div class="hero-btns">
+                <button class="btn-primary" onclick="scrollToLaunch()">Start Building <span style="margin-left:8px">→</span></button>
+                <button class="btn-secondary" onclick="window.open('https://github.com/bnb-chain/BEPs/blob/master/BAPs/BAP-578.md', '_blank')">Learn More</button>
+            </div>
+        </div>
+        <div class="scroll-indicator" onclick="scrollToAbout()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </div>
+    </section>
+    <div class="stats">
+        <div class="stat-item"><div class="stat-num">7,777</div><div class="stat-label">Total Supply</div></div>
+        <div class="stat-item"><div class="stat-num">1</div><div class="stat-label">Per Address</div></div>
+        <div class="stat-item"><div class="stat-num">Free</div><div class="stat-label">Mint Fee</div></div>
+        <div class="stat-item"><div class="stat-num">BSC</div><div class="stat-label">Network</div></div>
+    </div>
+    <section id="about" class="section">
+        <div class="container">
+            <div class="section-header"><h2>What is NFA?</h2><p>Non-Fungible Agents on BNB Chain</p></div>
+            <div class="concept-grid">
+                <div class="concept-item"><h3>Non-Fungible Agents</h3><p>Each agent is a unique digital entity with its own identity and personality.</p></div>
+                <div class="concept-item"><h3>True Ownership</h3><p>Own your AI agent forever. Transferable and verifiable on-chain.</p></div>
+                <div class="concept-item"><h3>AI-Powered</h3><p>Advanced AI capabilities for autonomous decision making.</p></div>
+                <div class="concept-item"><h3>Cross-Platform</h3><p>Works across chains, models, and applications.</p></div>
+            </div>
+        </div>
+    </section>
+    <section id="features" class="section">
+        <div class="container">
+            <div class="section-header"><h2>Key Features</h2><p>Everything you need for AI agents</p></div>
+            <div class="features-grid">
+                <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h3>Learning System</h3><p>Agents learn and improve over time through interactions.</p></div>
+                <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><h3>Cross-Platform</h3><p>Seamless operation across chains and applications.</p></div>
+                <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Gas Optimized</h3><p>Minimal on-chain footprint for maximum efficiency.</p></div>
+            </div>
+        </div>
+    </section>
+    <section id="how" class="section">
+        <div class="container">
+            <div class="section-header"><h2>How It Works</h2><p>Get started in minutes</p></div>
+            <div class="how-grid">
+                <div class="how-item"><div class="how-num">1</div><h4>Connect Wallet</h4><p>Link MetaMask on BSC</p></div>
+                <div class="how-item"><div class="how-num">2</div><h4>Verify Twitter</h4><p>Follow @NFA_identity</p></div>
+                <div class="how-item"><div class="how-num">3</div><h4>Complete Tasks</h4><p>Simple verification</p></div>
+                <div class="how-item"><div class="how-num">4</div><h4>Mint Agent</h4><p>Free - pay only gas</p></div>
+            </div>
+        </div>
+    </section>
+    <section id="agents" class="section">
+        <div class="container">
+            <div class="section-header"><h2>Agent Types</h2><p>Choose your agent template</p></div>
+            <div class="agent-types">
+                <div class="agent-type" onclick="selectAgentType(this, 'defi')"><h4>DeFi Agent</h4><p>Specialized for finance operations</p><ul class="agent-features"><li>Automated trading</li><li>Yield optimization</li><li>Portfolio management</li></ul></div>
+                <div class="agent-type" onclick="selectAgentType(this, 'game')"><h4>Game Agent</h4><p>Optimized for gaming</p><ul class="agent-features"><li>Autonomous gameplay</li><li>NFT trading</li><li>Guild management</li></ul></div>
+                <div class="agent-type" onclick="selectAgentType(this, 'dao')"><h4>DAO Agent</h4><p>For governance</p><ul class="agent-features"><li>Proposal analysis</li><li>Voting delegation</li><li>Community monitoring</li></ul></div>
+            </div>
+        </div>
+    </section>
+    <section id="technical" class="section">
+        <div class="container">
+            <div class="section-header"><h2>Technical</h2><p>Built on BNB Chain</p></div>
+            <div class="tech-grid">
+                <div class="tech-card"><h4>Core</h4><ul><li>ERC-721 NFT standard</li><li>Free mint (gas only)</li><li>1 NFT per address</li></ul></div>
+                <div class="tech-card"><h4>Security</h4><ul><li>Owner controls</li><li>Mint enabling</li><li>Withdrawal functions</li></ul></div>
+            </div>
+        </div>
+    </section>
+    <section class="section" id="launch">
+        <div class="container">
+            <div class="launchpad-panel">
+                <h3>Create Your Agent</h3><p>Complete tasks and mint your NFA for free</p>
+                <div class="progress-bar"><div class="progress-dot active" id="prog1"></div><div class="progress-dot" id="prog2"></div><div class="progress-dot" id="prog3"></div><div class="progress-dot" id="prog4"></div></div>
+                <div class="mint-step active" id="step1"><h4>Step 1: Connect Wallet</h4><p>Link your crypto wallet on BSC</p><button class="mint-btn" onclick="connectWallet()">Connect Wallet</button></div>
+                <div class="mint-step" id="step2"><h4>Step 2: Follow @NFA_identity</h4><p>Follow our Twitter to verify</p><button class="mint-btn" onclick="openTwitterFollow()">🐦 Follow @NFA_identity</button><p style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:12px">After following, click below</p><button class="mint-btn" onclick="verifyFollow()" style="margin-top:12px;background:rgba(16,185,129,0.2);border:1px solid #10B981;color:#10B981">✅ I've Followed</button></div>
+                <div class="mint-step" id="step3"><h4>Step 3: Mint Your Agent</h4><p>Congratulations! You're eligible.</p><button class="mint-btn" id="mintBtn" onclick="mintAgent()">🎁 Free Mint NFT</button></div>
+                <div class="mint-step" id="step4"><div class="success-check" id="successCheck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><h4>Step 4: Complete!</h4><p>Your NFA has been minted!</p></div>
+            </div>
+        </div>
+    </section>
+    <footer><p>NFA - Non-Fungible Agents | Built on BNB Chain</p></footer>
+    <div class="notification" id="notification"></div>
+    <script>
+        const CONTRACT_ADDRESS = '0xBC561DEB924d3C8F6f14A4B8264fBAd7C68a3db7';
+        const CONTRACT_ABI = ["function mint() external", "function mintEnabled() view returns (bool)", "function hasMinted(address) view returns (bool)", "function owner() view returns (address)"];
+        
+        let walletAddress = null;
+        let provider, signer, contract;
+        let currentStep = 0;
+        let selectedAgent = null;
+        
+        function showNotification(msg, isError = false) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.className = 'notification show' + (isError ? ' error' : '');
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+        
+        async function connectWallet() {
+            if (typeof ethereum === 'undefined') {
+                showNotification('Please install MetaMask!', true);
+                return;
+            }
+            try {
+                provider = new ethers.providers.Web3Provider(ethereum);
+                const accounts = await provider.send("eth_requestAccounts", []);
+                walletAddress = accounts[0];
+                signer = provider.getSigner();
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                
+                document.getElementById('walletAddr').textContent = walletAddress.slice(0,6) + '...' + walletAddress.slice(-4);
+                document.getElementById('walletAddr').style.display = 'inline-block';
+                document.getElementById('launchBtn').style.display = 'none';
+                
+                showNotification('Wallet connected!');
+                goToStep(2);
+                openTwitterFollow();
+            } catch (err) {
+                showNotification('Connection failed', true);
+            }
+        }
+        
+        function goToStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.mint-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById('prog' + i);
+                dot.classList.remove('active', 'completed');
+                if (i < currentStep) dot.classList.add('completed');
+                if (i === currentStep) dot.classList.add('active');
+            }
+        }
+        
+        function openTwitterFollow() {
+            window.open('https://x.com/NFA_identity', '_blank', 'width=600,height=700');
+            showNotification('Follow @NFA_identity in new tab!');
+        }
+        
+        function verifyFollow() {
+            showNotification('Twitter verified!');
+            goToStep(3);
+        }
+        
+        function selectAgentType(el, type) {
+            document.querySelectorAll('.agent-type').forEach(a => a.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedAgent = type;
+        }
+        
+        async function mintAgent() {
+            if (!walletAddress) {
+                showNotification('Please connect wallet first!', true);
+                return;
+            }
+            const btn = document.getElementById('mintBtn');
+            btn.disabled = true;
+            btn.textContent = 'Minting...';
+            try {
+                const tx = await contract.mint();
+                showNotification('Minting...');
+                await tx.wait();
+                btn.disabled = false;
+                btn.textContent = '🎁 Free Mint NFT';
+                document.getElementById('successCheck').classList.add('show');
+                showNotification('NFT minted successfully!');
+                goToStep(4);
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = '🎁 Free Mint NFT';
+                if (err.message.includes('user rejected')) {
+                    showNotification('Transaction cancelled', true);
+                } else if (err.message.includes('Already minted')) {
+                    showNotification('Already minted!', true);
+                } else if (err.message.includes('Mint not enabled')) {
+                    showNotification('Mint not enabled', true);
+                } else {
+                    showNotification('Mint failed', true);
+                }
+            }
+        }
+        
+        function scrollToLaunch() { document.getElementById('launch').scrollIntoView({ behavior: 'smooth' }); }
+        function scrollToAbout() { document.getElementById('about').scrollIntoView({ behavior: 'smooth' }); }
+        
+        function disconnectWallet() {
+            walletAddress = null;
+            document.getElementById('walletAddr').style.display = 'none';
+            document.getElementById('launchBtn').style.display = 'inline-block';
+            currentStep = 0;
+            updateProgress();
+            document.querySelectorAll('.mint-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+        }
+    </script>
+</body>
+</html>
